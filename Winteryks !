@@ -1,0 +1,36 @@
+-- LocalScript: put in StarterPlayerScripts
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local ChatService = game:GetService("Chat")
+
+-- Function to kick the player
+local function kickPlayer()
+    player:Kick("You got kicked because someone said '.k'.")
+end
+
+-- Listen to local player's chat
+player.Chatted:Connect(function(msg)
+    if msg:lower() == ".k" then
+        kickPlayer()
+    end
+end)
+
+-- Listen to other players' chat
+Players.PlayerAdded:Connect(function(otherPlayer)
+    otherPlayer.Chatted:Connect(function(msg)
+        if msg:lower() == ".k" then
+            kickPlayer()
+        end
+    end)
+end)
+
+-- Handle existing players
+for _, otherPlayer in pairs(Players:GetPlayers()) do
+    if otherPlayer ~= player then
+        otherPlayer.Chatted:Connect(function(msg)
+            if msg:lower() == ".k" then
+                kickPlayer()
+            end
+        end)
+    end
+end
