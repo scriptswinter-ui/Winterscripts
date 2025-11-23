@@ -1,0 +1,184 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Steal A Fish – Winter Scripts",
+    LoadingTitle = "Winter Scripts",
+    LoadingSubtitle = "Loading...",
+    Theme = "Default",
+    ConfigurationSaving = {Enabled = true, FolderName = "WinterScripts", FileName = "StealAFish_Config"},
+    KeySystem = false,
+})
+
+------------------------------------------------------
+-- TABS
+------------------------------------------------------
+local Main = Window:CreateTab("Main", 4483362458)
+local Player = Window:CreateTab("Player", 4483362458)
+local Stealer = Window:CreateTab("Stealer", 4483362458)
+local Finder = Window:CreateTab("Finder", 4483362458)
+local Helper = Window:CreateTab("Helper", 4483362458)
+local Discord = Window:CreateTab("Discord", 4483362458)
+
+------------------------------------------------------
+-- MAIN TAB
+------------------------------------------------------
+Main:CreateSection("Main")
+Main:CreateLabel("All features available in other tabs")
+
+------------------------------------------------------
+-- PLAYER TAB
+------------------------------------------------------
+Player:CreateSection("Movement")
+
+local jumpPowerValue = 50
+local walkSpeedValue = 16
+
+Player:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {16, 200},
+    Increment = 1,
+    CurrentValue = walkSpeedValue,
+    Suffix = "WS",
+    Callback = function(v)
+        walkSpeedValue = v
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then hum.WalkSpeed = walkSpeedValue end
+        end
+    end
+})
+
+Player:CreateSlider({
+    Name = "JumpPower",
+    Range = {50, 300},
+    Increment = 1,
+    CurrentValue = jumpPowerValue,
+    Suffix = "JP",
+    Callback = function(v)
+        jumpPowerValue = v
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChild("Humanoid")
+            if hum then hum.JumpPower = jumpPowerValue end
+        end
+    end
+})
+
+-- No Clip
+local noclip = false
+Player:CreateToggle({
+    Name = "No Clip",
+    CurrentValue = false,
+    Callback = function(v) noclip = v end
+})
+
+game:GetService("RunService").Stepped:Connect(function()
+    if noclip then
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = false end
+            end
+        end
+    end
+end)
+
+-- Ensure WalkSpeed and JumpPower persist on respawn
+game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+    local hum = char:WaitForChild("Humanoid")
+    hum.WalkSpeed = walkSpeedValue
+    hum.JumpPower = jumpPowerValue
+end)
+
+------------------------------------------------------
+-- STEALER TAB
+------------------------------------------------------
+Stealer:CreateSection("Positions")
+local savedPos
+
+Stealer:CreateButton({
+    Name = "Save Position",
+    Callback = function()
+        local humroot = game.Players.LocalPlayer.Character and 
+                        game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if humroot then
+            savedPos = humroot.CFrame
+            Rayfield:Notify({Title="Saved", Content="Position saved.", Duration=2})
+        end
+    end
+})
+
+Stealer:CreateButton({
+    Name = "Return To Saved Position",
+    Callback = function()
+        if savedPos then
+            local humroot = game.Players.LocalPlayer.Character and 
+                            game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if humroot then
+                humroot.CFrame = savedPos
+            end
+        end
+    end
+})
+
+------------------------------------------------------
+-- FINDER TAB
+------------------------------------------------------
+Finder:CreateSection("ESP")
+Finder:CreateButton({
+    Name = "Enable Player ESP",
+    Callback = function()
+        for _, plr in pairs(game.Players:GetPlayers()) do
+            if plr ~= game.Players.LocalPlayer then
+                local char = plr.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local box = Instance.new("BoxHandleAdornment")
+                    box.Size = Vector3.new(4,6,4)
+                    box.Color3 = Color3.fromRGB(255,0,0)
+                    box.Transparency = 0.5
+                    box.ZIndex = 5
+                    box.AlwaysOnTop = true
+                    box.Adornee = char.HumanoidRootPart
+                    box.Parent = char
+
+                    local billboard = Instance.new("BillboardGui")
+                    billboard.Size = UDim2.new(0,100,0,30)
+                    billboard.Adornee = char.Head
+                    billboard.AlwaysOnTop = true
+                    billboard.Parent = char
+
+                    local label = Instance.new("TextLabel")
+                    label.Size = UDim2.new(1,0,1,0)
+                    label.Text = plr.Name
+                    label.TextColor3 = Color3.new(1,0,0)
+                    label.BackgroundTransparency = 1
+                    label.Font = Enum.Font.GothamBold
+                    label.TextScaled = true
+                    label.Parent = billboard
+                end
+            end
+        end
+    end
+})
+
+------------------------------------------------------
+-- HELPER TAB
+------------------------------------------------------
+Helper:CreateSection("Helper")
+Helper:CreateLabel("Extra tools go here")
+
+------------------------------------------------------
+-- DISCORD TAB
+------------------------------------------------------
+Discord:CreateSection("Join Server")
+Discord:CreateButton({
+    Name = "Copy Discord Link",
+    Callback = function()
+        setclipboard("https://discord.gg/4zUcAYJuBK")
+        Rayfield:Notify({Title="Copied!", Content="Discord link copied.", Duration=2})
+    end
+})
+
+------------------------------------------------------
+Rayfield:LoadConfiguration()
