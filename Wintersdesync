@@ -1,0 +1,59 @@
+--// WINTER SCRIPT //--
+-- Black GUI + Random Out-of-Map Teleporter (Desync)
+-- Uses the "Flying Carpet" tool when available
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Winter_Script"
+ScreenGui.Parent = game.CoreGui
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 260, 0, 130)
+Frame.Position = UDim2.new(0.5, -130, 0.5, -65)
+Frame.BackgroundColor3 = Color3.new(0,0,0)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1,0,0,30)
+Title.BackgroundTransparency = 1
+Title.Text = "Winter Script"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.Parent = Frame
+
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(1, -20, 0, 60)
+Button.Position = UDim2.new(0,10,0,40)
+Button.BackgroundColor3 = Color3.new(0.1,0.1,0.1)
+Button.Text = "DESYNC"
+Button.TextColor3 = Color3.new(1,1,1)
+Button.Font = Enum.Font.GothamBold
+Button.TextSize = 16
+Button.Parent = Frame
+
+-- Teleport Function (Desync)
+local function RandomTP()
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+
+    -- Equip flying carpet if found
+    local Backpack = game.Players.LocalPlayer.Backpack
+    if Backpack:FindFirstChild("Flying Carpet") then
+        Backpack["Flying Carpet"].Parent = char
+    end
+
+    -- Random outside map coords
+    local X = math.random(-9999, 9999)
+    local Y = math.random(2000, 6000)
+    local Z = math.random(-9999, 9999)
+
+    if char:FindFirstChild("HumanoidRootPart") then
+        char.HumanoidRootPart.CFrame = CFrame.new(X,Y,Z)
+    end
+end
+
+Button.MouseButton1Click:Connect(RandomTP)
