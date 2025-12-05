@@ -1,0 +1,191 @@
+--// Winter Scripts GUI - Full Fixed Version
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local TS = game:GetService("TeleportService")
+local UserInputService = game:GetService("UserInputService")
+local Player = Players.LocalPlayer
+local character = Player.Character or Player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- ScreenGui
+local gui = Instance.new("ScreenGui")
+gui.Name = "WinterScriptsGUI"
+gui.ResetOnSpawn = false
+gui.Parent = Player:WaitForChild("PlayerGui")
+
+-- Outer Frame (Rainbow border)
+local outer = Instance.new("Frame")
+outer.Size = UDim2.new(0, 270, 0, 180)
+outer.Position = UDim2.new(0.5, -135, 0.5, -90)
+outer.BackgroundColor3 = Color3.fromRGB(255,0,0) -- will animate rainbow
+outer.BorderSizePixel = 0
+outer.Parent = gui
+
+local outerCorner = Instance.new("UICorner")
+outerCorner.CornerRadius = UDim.new(0, 12)
+outerCorner.Parent = outer
+
+-- Inner black frame
+local main = Instance.new("Frame")
+main.Size = UDim2.new(1, -8, 1, -8)
+main.Position = UDim2.new(0, 4, 0, 4)
+main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+main.BorderSizePixel = 0
+main.Parent = outer
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 8)
+mainCorner.Parent = main
+
+-- Draggable GUI
+local dragging, dragStart, startPos
+local function updateInput(input)
+	if dragging then
+		local delta = input.Position - dragStart
+		outer.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end
+
+outer.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = outer.Position
+	end
+end)
+outer.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		updateInput(input)
+	end
+end)
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Position = UDim2.new(0,0,0,0)
+title.BackgroundTransparency = 1
+title.Text = "Winter Scripts"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextScaled = true
+title.Font = Enum.Font.GothamBold
+title.Parent = main
+
+-- Minimize Button (-)
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.new(0, 25, 0, 25)
+minBtn.Position = UDim2.new(1, -30, 0, 5)
+minBtn.BackgroundTransparency = 1
+minBtn.Text = "-"
+minBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minBtn.TextScaled = true
+minBtn.Font = Enum.Font.GothamBold
+minBtn.Parent = main
+
+-- Persistent reopen button
+local reopenBtn = Instance.new("TextButton")
+reopenBtn.Size = UDim2.new(0, 120, 0, 30)
+reopenBtn.Position = UDim2.new(0.5, -60, 0.5, -15)
+reopenBtn.Text = "Open Winter Scripts"
+reopenBtn.TextColor3 = Color3.fromRGB(255,255,255)
+reopenBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+reopenBtn.Visible = false
+reopenBtn.Parent = gui
+
+minBtn.MouseButton1Click:Connect(function()
+	main.Visible = false
+	reopenBtn.Visible = true
+end)
+
+reopenBtn.MouseButton1Click:Connect(function()
+	main.Visible = true
+	reopenBtn.Visible = false
+end)
+
+-- KICK Button (kicks YOU from game)
+local kickBtn = Instance.new("TextButton")
+kickBtn.Size = UDim2.new(1, -20, 0, 35)
+kickBtn.Position = UDim2.new(0, 10, 0, 50)
+kickBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+kickBtn.BorderSizePixel = 0
+kickBtn.Text = "KICK"
+kickBtn.TextColor3 = Color3.fromRGB(255,255,255)
+kickBtn.TextScaled = true
+kickBtn.Font = Enum.Font.GothamBold
+kickBtn.Parent = main
+
+kickBtn.MouseButton1Click:Connect(function()
+	Player:Kick("u stroked my cock- Winter Scripts")
+end)
+
+-- Allow Friends Button
+local allowBtn = Instance.new("TextButton")
+allowBtn.Size = UDim2.new(1, -20, 0, 35)
+allowBtn.Position = UDim2.new(0, 10, 0, 90)
+allowBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+allowBtn.BorderSizePixel = 0
+allowBtn.Text = "Allow Friends"
+allowBtn.TextColor3 = Color3.fromRGB(255,255,255)
+allowBtn.TextScaled = true
+allowBtn.Font = Enum.Font.GothamBold
+allowBtn.Parent = main
+
+allowBtn.MouseButton1Click:Connect(function()
+	pcall(function()
+		RS:WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE/PlotService/ToggleFriends"):FireServer()
+	end)
+end)
+
+-- No Walk Animation Toggle
+local noWalkBtn = Instance.new("TextButton")
+noWalkBtn.Size = UDim2.new(1, -20, 0, 35)
+noWalkBtn.Position = UDim2.new(0, 10, 0, 130)
+noWalkBtn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+noWalkBtn.BorderSizePixel = 0
+noWalkBtn.Text = "No Walk Animation: OFF"
+noWalkBtn.TextColor3 = Color3.fromRGB(255,255,255)
+noWalkBtn.TextScaled = true
+noWalkBtn.Font = Enum.Font.GothamBold
+noWalkBtn.Parent = main
+
+local noWalkEnabled = false
+noWalkBtn.MouseButton1Click:Connect(function()
+	noWalkEnabled = not noWalkEnabled
+	noWalkBtn.Text = "No Walk Animation: "..(noWalkEnabled and "ON" or "OFF")
+end)
+
+-- Continuous No Walk Animation
+spawn(function()
+	while true do
+		if noWalkEnabled then
+			if humanoid and humanoid:FindFirstChild("Animator") then
+				local animator = humanoid.Animator
+				for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+					if track.Name:lower():find("walk") or track.Name:lower():find("run") then
+						track:Stop()
+					end
+				end
+			end
+		end
+		task.wait(0.1)
+	end
+end)
+
+-- Rainbow outer frame animation
+spawn(function()
+	local hue = 0
+	while true do
+		hue = (hue + 1) % 360
+		outer.BackgroundColor3 = Color3.fromHSV(hue/360,0.8,0.8)
+		task.wait(0.02)
+	end
+end)
