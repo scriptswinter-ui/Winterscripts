@@ -1,0 +1,102 @@
+-- Speed Boost Button GUI
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local baseSpeed = 27.5
+local speedConn
+local speedEnabled = false
+
+-- Character helpers
+local function getCharacter()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    return char, hrp, hum
+end
+
+local function getMoveDir()
+    local _, _, hum = getCharacter()
+    if hum and hum.MoveDirection.Magnitude > 0.1 then
+        return Vector3.new(hum.MoveDirection.X, 0, hum.MoveDirection.Z).Unit
+    end
+    return Vector3.zero
+end
+
+-- Speed logic
+local function startSpeed()
+    if speedConn then return end
+    speedConn = RunService.Heartbeat:Connect(function()
+        local _, hrp, hum = getCharacter()
+        if not hrp or not hum then return end
+
+        local dir = getMoveDir()
+        if dir.Magnitude > 0 then
+            hrp.AssemblyLinearVelocity =
+                Vector3.new(dir.X * baseSpeed, hrp.AssemblyLinearVelocity.Y, dir.Z * baseSpeed)
+        end
+    end)
+end
+
+local function stopSpeed()
+    if speedConn then
+        speedConn:Disconnect()
+        speedConn = nil
+    end
+end
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "SpeedBoostGUI"
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 160, 0, 70)
+frame.Position = UDim2.new(0.5, -80, 0.8, -35)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+-- Title
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 18)
+title.Position = UDim2.new(0, 0, 0, 2)
+title.BackgroundTransparency = 1
+title.Text = "Winter Scripts"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 12
+title.Parent = frame
+
+-- Button
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, -20, 1, -36)
+button.Position = UDim2.new(0, 10, 0, 26)
+button.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+button.TextColor3 = Color3.fromRGB(0, 0, 0)
+button.Font = Enum.Font.GothamBold
+button.TextSize = 16
+button.Text = "Speed: OFF"
+button.Parent = frame
+
+Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+
+-- Button toggle
+button.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    if speedEnabled then
+        startSpeed()
+        button.Text = "Speed: ON"
+        button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    else
+        stopSpeed()
+        button.Text = "Speed: OFF"
+        button.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
