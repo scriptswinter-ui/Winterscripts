@@ -1,0 +1,215 @@
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+
+if CoreGui:FindFirstChild("winter,sae script") then
+    CoreGui["winter,sae script"]:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "winter,sae script"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 160, 0, 200)
+Frame.Position = UDim2.new(0.78, 0, 0.45, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+Frame.BackgroundTransparency = 0.25
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+Instance.new("UICorner", Frame).CornerRadius = UDim.new(0,10)
+
+local Title = Instance.new("TextLabel")
+Title.Parent = Frame
+Title.Size = UDim2.new(1,0,0,24)
+Title.Position = UDim2.new(0,0,0,4)
+Title.BackgroundTransparency = 1
+Title.Text = "WINTER,SAE SCRIPT"
+Title.Font = Enum.Font.Code
+Title.TextSize = 15
+Title.TextColor3 = Color3.new(1,1,1)
+
+local function makeButton(text, y)
+    local b = Instance.new("TextButton")
+    b.Parent = Frame
+    b.Size = UDim2.new(0.9,0,0,28)
+    b.Position = UDim2.new(0.05,0,0,y)
+    b.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    b.BorderSizePixel = 0
+    b.Text = text
+    b.Font = Enum.Font.Code
+    b.TextSize = 13
+    b.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
+    return b
+end
+
+local btnDesync = makeButton("Desync", 35)
+local btnUnwalk = makeButton("Unwalk OFF", 70)
+local btnAllow = makeButton("Allow Friends", 105)
+local btnKick = makeButton("Kick", 140)
+local btnSpeed = makeButton("Speed OFF", 175)
+
+local fflags = {["NextGenReplicatorEnabledWrite4"] = "True"}
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "WINTER ESP"
+ESPFolder.Parent = Workspace
+local fakePosESP
+local serverPosition
+
+local function applyFlags()
+    for k,v in pairs(fflags) do
+        pcall(setfflag, k, v)
+    end
+end
+
+local function createESP()
+    ESPFolder:ClearAllChildren()
+    local p = Instance.new("Part")
+    p.Anchored = true
+    p.CanCollide = false
+    p.Size = Vector3.new(2,5,2)
+    p.Material = Enum.Material.Neon
+    p.Color = Color3.new(1,0,0)
+    p.Transparency = 0.3
+    p.Parent = ESPFolder
+    fakePosESP = p
+end
+
+local function updateServerPos()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    serverPosition = hrp.Position
+    if fakePosESP then
+        fakePosESP.CFrame = CFrame.new(serverPosition)
+    end
+end
+
+local function respawn(plr)
+    local char = plr.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local origCFrame = hrp.CFrame
+    local camCFrame = Workspace.CurrentCamera.CFrame
+    local reject = pcall(function() return gethiddenproperty(Workspace, "RejectCharacterDeletions") ~= Enum.RejectCharacterDeletions.Disabled end)
+    local repFocus = gethiddenproperty(plr, "ReplicationFocus")
+    if reject and repFocus then
+        repFocus(plr.ConnectDiedSignalBackend)
+        task.wait(Players.RespawnTime - 0.1)
+        repFocus(plr.Kill)
+    else
+        local hum = char:FindFirstChildWhichIsA("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Dead) end
+        char:ClearAllChildren()
+        local dummy = Instance.new("Model", Workspace)
+        plr.Character = dummy
+        task.wait()
+        plr.Character = nil
+        dummy:Destroy()
+    end
+    task.spawn(function()
+        local newChar = plr.CharacterAdded:Wait()
+        local newHRP = newChar:WaitForChild("HumanoidRootPart", 5)
+        if newHRP then
+            serverPosition = origCFrame.Position
+            newHRP.CFrame = origCFrame
+        end
+        Workspace.CurrentCamera.CFrame = camCFrame
+        task.wait(0.5)
+        createESP()
+    end)
+end
+
+btnDesync.MouseButton1Click:Connect(function()
+    applyFlags()
+    createESP()
+    respawn(LocalPlayer)
+end)
+
+RunService.RenderStepped:Connect(function()
+    updateServerPos()
+end)
+
+local unwalkEnabled = false
+local unwalkConn
+btnUnwalk.MouseButton1Click:Connect(function()
+    unwalkEnabled = not unwalkEnabled
+    btnUnwalk.Text = unwalkEnabled and "Unwalk ON" or "Unwalk OFF"
+    if unwalkEnabled then
+        unwalkConn = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            local anim = hum:FindFirstChildWhichIsA("Animator")
+            if not anim then return end
+            for _,t in pairs(anim:GetPlayingAnimationTracks()) do
+                t:Stop()
+                t:AdjustSpeed(0)
+            end
+        end)
+    else
+        if unwalkConn then
+            unwalkConn:Disconnect()
+            unwalkConn = nil
+        end
+    end
+end)
+
+btnAllow.MouseButton1Click:Connect(function()
+    pcall(function()
+        ReplicatedStorage:WaitForChild("Packages")
+            :WaitForChild("Net")
+            :WaitForChild("RE/PlotService/ToggleFriends")
+            :FireServer()
+    end)
+end)
+
+btnKick.MouseButton1Click:Connect(function()
+    LocalPlayer:Kick("winter is cool")
+end)
+
+local SPEED = 27.5
+local speedEnabled = false
+local speedConn
+local function getChar()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    return char, char:WaitForChild("HumanoidRootPart"), char:FindFirstChildOfClass("Humanoid")
+end
+local function startSpeed()
+    if speedConn then return end
+    speedConn = RunService.Heartbeat:Connect(function()
+        local _, hrp, hum = getChar()
+        if hum and hrp then
+            local dir = hum.MoveDirection
+            if dir.Magnitude > 0 then
+                hrp.AssemblyLinearVelocity = Vector3.new(dir.X * SPEED, hrp.AssemblyLinearVelocity.Y, dir.Z * SPEED)
+            end
+        end
+    end)
+end
+local function stopSpeed()
+    if speedConn then
+        speedConn:Disconnect()
+        speedConn = nil
+    end
+end
+btnSpeed.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    if speedEnabled then
+        startSpeed()
+        btnSpeed.Text = "Speed ON"
+    else
+        stopSpeed()
+        btnSpeed.Text = "Speed OFF"
+    end
+end)
